@@ -56,6 +56,14 @@ const SEED = [
     ],
     decisions: ["Chose GPT-4o for classification", "Excluded archived tickets", "Set refresh cadence to 24h"],
     releaseDate: "2026-04-15", impact: "High", effort: "Medium",
+    snapshot: {
+      summary: "Uses GPT-4o to automatically score and rank product backlog items by effort, business impact, and strategic alignment — reducing manual grooming time by 70%.",
+      pocEnvironment: "Azure Dev (dev-ai.acmecorp.internal)",
+      productVersion: "v3.2.1 — Released Apr 2026",
+      liveUrl: "https://ai.acmecorp.com/backlog",
+      nextMilestone: "Multi-team backlog sync — Jun 2026",
+      clientFeedback: { sentiment: "Positive", quote: "Cut our sprint planning from 3 hours to 45 minutes. Game changer for the team.", client: "Acme Corp" },
+    },
   },
   {
     id: "cap-002", title: "Meeting → Action Items",
@@ -71,6 +79,14 @@ const SEED = [
     ],
     decisions: ["Using Whisper for transcription", "Storing outputs in Google Drive"],
     releaseDate: "2026-06-01", impact: "High", effort: "High",
+    snapshot: {
+      summary: "Records and transcribes meetings using Whisper API, then extracts action items with assigned owners and deadlines — delivered as a structured Google Doc within minutes.",
+      pocEnvironment: "AWS Sandbox (poc-meetings.skybridge.io)",
+      productVersion: "POC v0.4 — In Testing",
+      liveUrl: "https://poc.skybridge.io/meeting-ai",
+      nextMilestone: "Data privacy sign-off — May 2026",
+      clientFeedback: { sentiment: "Positive", quote: "The transcription accuracy is impressive. We just need the privacy approvals sorted.", client: "SkyBridge" },
+    },
   },
   {
     id: "cap-003", title: "PRD Auto-Generator",
@@ -86,6 +102,14 @@ const SEED = [
     ],
     decisions: ["Multiple PRD templates", "Output in Notion + Google Docs"],
     releaseDate: "2026-07-10", impact: "Medium", effort: "Low",
+    snapshot: {
+      summary: "Converts rough feature ideas into fully structured PRDs with goals, user stories, edge cases, and acceptance criteria — supporting Notion and Google Docs output formats.",
+      pocEnvironment: "Internal Staging (staging.internal/prd-gen)",
+      productVersion: "MVP — Targeting Jul 2026",
+      liveUrl: "",
+      nextMilestone: "Internal beta with 3 PMs — Jun 2026",
+      clientFeedback: { sentiment: "Needs Work", quote: "Concept is solid but output still needs significant manual editing before it's usable.", client: "Internal Team" },
+    },
   },
   {
     id: "cap-004", title: "User Feedback Synthesizer",
@@ -101,6 +125,14 @@ const SEED = [
     ],
     decisions: ["K-means clustering for theme grouping", "Weekly automated email digest"],
     releaseDate: "2026-03-28", impact: "High", effort: "High",
+    snapshot: {
+      summary: "Aggregates NPS scores, support tickets, and survey responses using K-means clustering to surface weekly insight themes — delivered as an automated email digest every Monday.",
+      pocEnvironment: "Production (insights.platform.io)",
+      productVersion: "v2.0.0 — Released Mar 2026",
+      liveUrl: "https://insights.platform.io/feedback",
+      nextMilestone: "Slack digest integration — Jun 2026",
+      clientFeedback: { sentiment: "Positive", quote: "We've completely replaced our manual weekly feedback review. Saves the team 5 hours every week.", client: "Pinnacle Group" },
+    },
   },
   {
     id: "cap-005", title: "Competitive Intelligence Bot",
@@ -116,6 +148,14 @@ const SEED = [
     ],
     decisions: [],
     releaseDate: "2026-08-30", impact: "Medium", effort: "High",
+    snapshot: {
+      summary: "Monitors competitor websites, job postings, and press releases using web scraping and LLM summarisation to deliver weekly competitive signal reports to the strategy team.",
+      pocEnvironment: "Not started — in discovery",
+      productVersion: "Discovery Phase",
+      liveUrl: "",
+      nextMilestone: "Build vs buy decision — May 2026",
+      clientFeedback: { sentiment: "Neutral", quote: "Interested in the concept but need to see a working prototype before committing resources.", client: "Internal — VP Strategy" },
+    },
   },
   {
     id: "cap-006", title: "Stakeholder Update Generator",
@@ -131,6 +171,14 @@ const SEED = [
     ],
     decisions: ["3 audience modes: Exec, Engineering, Client", "Integrates with Jira sprint data"],
     releaseDate: "2026-05-30", impact: "Medium", effort: "Low",
+    snapshot: {
+      summary: "Pulls sprint data from Jira and generates tailored status updates for three audiences — executive summary, engineering deep-dive, and client-facing progress report.",
+      pocEnvironment: "POC (poc-updates.skybridge.io)",
+      productVersion: "POC v0.7 — Beta Testing",
+      liveUrl: "https://poc-updates.skybridge.io",
+      nextMilestone: "Jira webhook automation — May 2026",
+      clientFeedback: { sentiment: "Positive", quote: "The exec summary format is exactly what we needed. No more Friday afternoon scramble.", client: "Acme Corp" },
+    },
   },
 ];
 
@@ -408,6 +456,207 @@ const CXOCard = ({ cap, onClick }) => {
         </div>
         <span style={{ fontSize: 16, color: cfg.color, fontWeight: 700, fontFamily: MONO, textShadow: glow(cfg.color, 4) }}>{prog}%</span>
       </div>
+    </div>
+  );
+};
+
+// ── Sentiment config ──────────────────────────────────────────────────────────
+const SENTIMENT = {
+  "Positive":   { color: T.green,   bg: "rgba(52,211,153,0.12)",  icon: "↑" },
+  "Neutral":    { color: T.amber,   bg: "rgba(251,191,36,0.12)",  icon: "→" },
+  "Needs Work": { color: T.red,     bg: "rgba(248,113,113,0.12)", icon: "↓" },
+};
+
+// ── Snapshot Card ─────────────────────────────────────────────────────────────
+const SnapshotCard = ({ cap }) => {
+  const s = cap.snapshot || {};
+  const cfg = STATUS_CONFIG[cap.status];
+  const tcfg = TYPE_CONFIG[cap.type];
+  const sentiment = SENTIMENT[s.clientFeedback?.sentiment] || SENTIMENT["Neutral"];
+  const prog = latestProgress(cap);
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div style={{
+      background: T.bgCard, border: `1px solid ${T.border}`,
+      borderRadius: 14, overflow: "hidden",
+      display: "flex", flexDirection: "column",
+      transition: "box-shadow 0.2s",
+      position: "relative",
+    }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = glow(cfg.color, 8)}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+    >
+      {/* Top accent line */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${cfg.color}, ${cfg.color}44, transparent)` }} />
+
+      {/* Card header */}
+      <div style={{ padding: "18px 20px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+          <h3 style={{ margin: 0, fontSize: 16, color: T.textHero, fontWeight: 700, fontFamily: SANS, lineHeight: 1.3 }}>{cap.title}</h3>
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            <Badge label={cfg.label} color={cfg.color} bg={cfg.bg} />
+            <Badge label={tcfg.label} color={tcfg.color} />
+          </div>
+        </div>
+
+        {/* Summary */}
+        <p style={{ margin: 0, fontSize: 13, color: T.textSecond, lineHeight: 1.7, fontFamily: SANS }}>{s.summary || cap.description}</p>
+
+        {/* Progress */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 12, color: T.textMuted, fontFamily: SANS }}>Progress</span>
+            <span style={{ fontSize: 13, color: cfg.color, fontWeight: 700, fontFamily: MONO }}>{prog}%</span>
+          </div>
+          <ProgressBar value={prog} color={cfg.color} height={5} />
+        </div>
+      </div>
+
+      {/* Info grid */}
+      <div style={{ padding: "0 20px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+
+        {/* POC Environment */}
+        <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 8, alignItems: "flex-start" }}>
+          <span style={{ fontSize: 11, color: T.textDim, fontWeight: 600, fontFamily: SANS, textTransform: "uppercase", letterSpacing: "0.06em", paddingTop: 2 }}>POC Environment</span>
+          <span style={{ fontSize: 13, color: T.textSecond, fontFamily: MONO, background: "rgba(14,165,233,0.06)", padding: "3px 10px", borderRadius: 5, border: `1px solid ${T.border}`, wordBreak: "break-all" }}>{s.pocEnvironment || "—"}</span>
+        </div>
+
+        {/* Product Version */}
+        <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 8, alignItems: "flex-start" }}>
+          <span style={{ fontSize: 11, color: T.textDim, fontWeight: 600, fontFamily: SANS, textTransform: "uppercase", letterSpacing: "0.06em", paddingTop: 2 }}>Product Version</span>
+          <span style={{ fontSize: 13, color: T.textPrimary, fontFamily: SANS, fontWeight: 600 }}>{s.productVersion || "—"}</span>
+        </div>
+
+        {/* Live URL */}
+        {s.liveUrl && (
+          <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 8, alignItems: "center" }}>
+            <span style={{ fontSize: 11, color: T.textDim, fontWeight: 600, fontFamily: SANS, textTransform: "uppercase", letterSpacing: "0.06em" }}>Live URL</span>
+            <a href={s.liveUrl} target="_blank" rel="noopener noreferrer" style={{
+              fontSize: 13, color: T.primary, fontFamily: SANS, textDecoration: "none",
+              display: "flex", alignItems: "center", gap: 5,
+            }}
+              onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+              onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
+            >↗ {s.liveUrl.replace("https://","")}</a>
+          </div>
+        )}
+
+        {/* Next Milestone */}
+        <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 8, alignItems: "center" }}>
+          <span style={{ fontSize: 11, color: T.textDim, fontWeight: 600, fontFamily: SANS, textTransform: "uppercase", letterSpacing: "0.06em" }}>Next Milestone</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.amber, boxShadow: glow(T.amber, 4), flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: T.amber, fontFamily: SANS, fontWeight: 600 }}>{s.nextMilestone || "TBD"}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ margin: "0 20px", height: 1, background: `linear-gradient(90deg, ${T.border}, transparent)` }} />
+
+      {/* Client Feedback */}
+      {s.clientFeedback && (
+        <div style={{ padding: "14px 20px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11, color: T.textDim, fontWeight: 600, fontFamily: SANS, textTransform: "uppercase", letterSpacing: "0.06em" }}>Client Feedback</span>
+            <span style={{
+              padding: "2px 10px", borderRadius: 99, fontSize: 11, fontWeight: 700,
+              color: sentiment.color, background: sentiment.bg,
+              border: `1px solid ${sentiment.color}44`, fontFamily: SANS,
+              display: "flex", alignItems: "center", gap: 4,
+            }}>{sentiment.icon} {s.clientFeedback.sentiment}</span>
+            <span style={{ fontSize: 12, color: T.textDim, fontFamily: SANS, marginLeft: "auto" }}>— {s.clientFeedback.client}</span>
+          </div>
+          <div style={{
+            padding: "12px 14px", borderRadius: 8,
+            background: `${sentiment.color}0a`,
+            border: `1px solid ${sentiment.color}22`,
+            borderLeft: `3px solid ${sentiment.color}`,
+          }}>
+            <p style={{ margin: 0, fontSize: 13, color: T.textSecond, lineHeight: 1.7, fontFamily: SANS, fontStyle: "italic" }}>"{s.clientFeedback.quote}"</p>
+          </div>
+        </div>
+      )}
+
+      {/* Owner + Release footer */}
+      <div style={{ padding: "10px 20px", borderTop: `1px solid rgba(14,165,233,0.07)`, background: "rgba(14,165,233,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: T.textDim, fontFamily: SANS }}>Owner: <span style={{ color: T.textMuted, fontWeight: 600 }}>{cap.owner}</span></span>
+        <span style={{ fontSize: 12, color: T.textDim, fontFamily: SANS }}>Release: <span style={{ color: T.textMuted, fontWeight: 600 }}>{cap.releaseDate || "TBD"}</span></span>
+      </div>
+    </div>
+  );
+};
+
+// ── Snapshot View ─────────────────────────────────────────────────────────────
+const SnapshotView = ({ caps }) => {
+  const [filterSentiment, setFilterSentiment] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  const filtered = caps.filter(c => {
+    const sentimentMatch = filterSentiment === "all" || c.snapshot?.clientFeedback?.sentiment === filterSentiment;
+    const statusMatch = filterStatus === "all" || c.status === filterStatus;
+    return sentimentMatch && statusMatch;
+  });
+
+  const sentimentCounts = {
+    Positive:   caps.filter(c => c.snapshot?.clientFeedback?.sentiment === "Positive").length,
+    Neutral:    caps.filter(c => c.snapshot?.clientFeedback?.sentiment === "Neutral").length,
+    "Needs Work": caps.filter(c => c.snapshot?.clientFeedback?.sentiment === "Needs Work").length,
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+
+      {/* Sentiment summary bar */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+        {Object.entries(SENTIMENT).map(([key, cfg]) => (
+          <div key={key} style={{
+            background: T.bgCard, border: `1px solid ${cfg.color}22`,
+            borderRadius: 12, padding: "16px 20px",
+            display: "flex", alignItems: "center", gap: 14,
+            cursor: "pointer",
+            outline: filterSentiment === key ? `1px solid ${cfg.color}` : "none",
+            boxShadow: filterSentiment === key ? glow(cfg.color, 6) : "none",
+            transition: "all 0.15s",
+          }} onClick={() => setFilterSentiment(filterSentiment === key ? "all" : key)}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: cfg.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: cfg.color, fontWeight: 700, flexShrink: 0 }}>{cfg.icon}</div>
+            <div>
+              <div style={{ fontSize: 12, color: T.textDim, fontFamily: SANS, marginBottom: 4 }}>{key}</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: cfg.color, fontFamily: MONO, lineHeight: 1, textShadow: glow(cfg.color, 6) }}>{sentimentCounts[key]}</div>
+            </div>
+            <div style={{ position: "absolute", right: 16, top: 0, bottom: 0, display: "flex", alignItems: "center" }}>
+              <div style={{ width: 3, height: `${(sentimentCounts[key] / caps.length) * 60}%`, borderRadius: 2, background: cfg.color, opacity: 0.4 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontSize: 13, color: T.textMuted, fontFamily: SANS }}>Status:</span>
+        {["all", ...Object.keys(STATUS_CONFIG)].map(s => (
+          <button key={s} onClick={() => setFilterStatus(s)} style={{
+            padding: "5px 13px", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 600,
+            background: filterStatus===s ? (STATUS_CONFIG[s]?.bg||"rgba(56,189,248,0.15)") : "rgba(14,165,233,0.04)",
+            border: filterStatus===s ? `1px solid ${STATUS_CONFIG[s]?.color||T.primary}` : `1px solid ${T.border}`,
+            color: filterStatus===s ? (STATUS_CONFIG[s]?.color||T.primary) : T.textMuted,
+            fontFamily: SANS, transition: "all 0.15s",
+          }}>{s === "all" ? "All" : STATUS_CONFIG[s].label}</button>
+        ))}
+        <span style={{ marginLeft: "auto", fontSize: 13, color: T.textDim, fontFamily: SANS }}>{filtered.length} initiative{filtered.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      {/* Cards grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(500px, 1fr))", gap: 18 }}>
+        {filtered.map(cap => <SnapshotCard key={cap.id} cap={cap} />)}
+      </div>
+
+      {filtered.length === 0 && (
+        <div style={{ textAlign: "center", padding: "60px 20px", color: T.textDim, fontFamily: SANS, fontSize: 15 }}>
+          No initiatives match the selected filters.
+        </div>
+      )}
     </div>
   );
 };
@@ -786,7 +1035,7 @@ const CapabilityModal = ({ cap, onSave, onClose }) => {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function AIDashboard() {
-  const [persona, setPersona] = useState("cxo");
+  const [persona, setPersona] = useState("snapshot");
   const [caps, setCaps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -878,7 +1127,7 @@ export default function AIDashboard() {
           {saveStatus && <span style={{ fontSize: 13, color: T.green, fontFamily: SANS }}>{saveStatus}</span>}
           <span style={{ fontSize: 11, color: T.textDim, fontFamily: SANS, border: `1px solid ${T.border}`, padding: "3px 10px", borderRadius: 5 }}>Shared · Live</span>
           <div style={{ display: "flex", background: "rgba(14,165,233,0.05)", borderRadius: 8, padding: 3, border: `1px solid ${T.border}` }}>
-            {[["cxo","CXO View"],["pm","PM View"]].map(([key,label]) => (
+            {[["snapshot","AI Snapshot"],["cxo","CXO View"],["pm","PM View"]].map(([key,label]) => (
               <button key={key} onClick={() => setPersona(key)} style={{
                 padding: "7px 18px", borderRadius: 6, border: "none", cursor: "pointer",
                 background: persona===key ? "rgba(56,189,248,0.18)" : "transparent",
@@ -912,7 +1161,9 @@ export default function AIDashboard() {
       </div>
 
       <main style={{ padding: "26px 28px", maxWidth: 1200, margin: "0 auto" }}>
-        {persona==="cxo"
+        {persona==="snapshot"
+          ? <SnapshotView caps={caps} />
+          : persona==="cxo"
           ? <CXOView caps={caps} onSelect={setSelected} />
           : <PMView caps={filtered} allCaps={caps} onSelect={setSelected} onAdd={()=>setAddingNew(true)} onEdit={setEditing} filterStatus={filterStatus} setFilterStatus={setFilterStatus} filterType={filterType} setFilterType={setFilterType} />
         }
